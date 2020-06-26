@@ -2,26 +2,26 @@
 using NVIDIA Jetson to scan and recoganize multi qrcode
 
 # Environment
-Jetson TX1/2  
-JetPack3.1 ~ 3.3  
-Python+OpenCV+Pyzbar  
+* Jetson TX1/2  
+* JetPack3.1 ~ 3.3  
+* Python+OpenCV+Pyzbar  
 
 # Build
-sudo apt-get install libzbar-dev libzbar0 
-sudo apt-get update; 
-sudo apt-get install python-pip
-sudo apt-get install python-numpy 
-sudo pip3 install pyzbar
-sudo pip3 install imutils 
+* sudo apt-get install libzbar-dev libzbar0 
+* sudo apt-get update; 
+* sudo apt-get install python-pip
+* sudo apt-get install python-numpy 
+* sudo pip3 install pyzbar
+* sudo pip3 install imutils 
 
 # Run
-Realtime video qrcode capture and recognize using barcode_scan_video_tx2.py 
+* Realtime video qrcode capture and recognize using barcode_scan_video_tx2.py 
 
-python barcode_scan_video_tx2.py  (open camera /dev/video0&1)  
+* python barcode_scan_video_tx2.py  (open camera /dev/video0&1)  
 
-Static image qrcode capture and recognize using barcode_scan_image_tx2.py  
+* Static image qrcode capture and recognize using barcode_scan_image_tx2.py  
 
-python barcode_scan_image_tx2.py QRCodeImage/Text.png   
+* python barcode_scan_image_tx2.py QRCodeImage/Text.png   
 
 # Support
 dennis.pub@gmail.com
