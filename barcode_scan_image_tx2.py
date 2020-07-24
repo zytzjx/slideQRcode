@@ -6,6 +6,10 @@ import imutils
 import numpy as np
 import re
 import math
+import os
+import time
+from glob import glob
+from datetime import datetime
 
  
 def image_resize(image, width = None, height = None, ratio=0.0, inter = cv2.INTER_AREA):
@@ -68,9 +72,56 @@ def isValidEMEI(n):
 
     return luhn_sum_mod_base(s) == 0
 
-def decodeBarcode(image):
-    imaget = image_resize(image, ratio=1.0)#cv2.imread('crop.png')
-    for angle in np.arange(0, 45, 1):
+def DecodeBarcodes(images):
+    for image in images:
+        barcodes = pyzbar.decode(image)
+        # loop over the detected barcodes
+        for barcode in barcodes:
+            # extract the bounding box location of the barcode and draw the
+            # bounding box surrounding the barcode on the image
+            (x, y, w, h) = barcode.rect
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+            # the barcode data is a bytes object so if we want to draw it on
+            # our output image we need to convert it to a string first
+            barcodeData = barcode.data.decode("utf-8")
+            barcodeType = barcode.type
+
+            # draw the barcode data and barcode type on the image
+            text = "{} ({})".format(barcodeData, barcodeType)
+            # print(text)
+            # cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.5, (255, 0, 255), 1)
+
+            # print the barcode type and data to the terminal
+            # print("[INFO] Found {} barcode: {}".format(barcodeType, barcodeData))
+            
+            if isValidEMEI("{}".format(barcodeData)): 
+                return "{}".format(barcodeData)
+
+
+def DecodeRotateBar(image):
+    images=[]
+    ratios=[0.5, 0.25, 0.75, 1.0]
+    for ratio in ratios:
+        images.append(image_resize(image, ratio=ratio))
+
+    for angle in np.arange(0, 45, 2):
+        imagerotes=[]
+        for img in images:
+            imagerotes.append(imutils.rotate_bound(img, angle))
+        
+        imei = DecodeBarcodes(imagerotes)
+        if imei is not None and len(imei) > 0:
+            return imei
+
+
+def decodeBarcode(image, ratio = 0.5):
+    imaget = image_resize(image, ratio=ratio)#cv2.imread('crop.png')
+    bFind = False
+    imei=""
+    for angle in np.arange(0, 45, 2):
+        print("image angle:", angle)
         rotated = imutils.rotate_bound(imaget, angle)
         # find the barcodes in the image and decode each of the barcodes
         barcodes = pyzbar.decode(rotated)
@@ -90,31 +141,96 @@ def decodeBarcode(image):
             # draw the barcode data and barcode type on the image
             text = "{} ({})".format(barcodeData, barcodeType)
             print(text)
-            cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                0.5, (255, 0, 255), 1)
+            # cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.5, (255, 0, 255), 1)
 
             # print the barcode type and data to the terminal
-            print("[INFO] Found {} barcode: {}".format(barcodeType, barcodeData))
+            # print("[INFO] Found {} barcode: {}".format(barcodeType, barcodeData))
             
             if isValidEMEI("{}".format(barcodeData)): 
-                return "{}".format(barcodeData)
+                imei = "{}".format(barcodeData)
+                bFind = True
+                #return "{}".format(barcodeData)
             
         #cv2.imshow("Rotated (Correct)", rotated)
         #cv2.waitKey(0)
 
-        if len(barcodes) > 0:
+        #if len(barcodes) > 0:
+        if bFind:
             break
 
+    return imei
+    
 
+'''
+imageOCR/IMG_1763.JPG
+imageOCR/IMG_1764.JPG
+imageOCR/IMG_1768.JPG
+imageOCR/IMG_1777.JPG
+imageOCR/IMG_1780.JPG
+imageOCR/IMG_1816.JPG
+imageOCR/IMG_1824.JPG
+
+import os
+from glob import glob
+result = [y for x in os.walk('/home/qa/Desktop/0721') for y in glob(os.path.join(x[0], '*.jpg'))]
+'''
 # construct the argument parser and parse the arguments (using -im instead image)
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", required=True, help="path to input image")
+ap.add_argument("-i", "--image", required=False, help="path to input image")
 args = vars(ap.parse_args())
+# args["image"] = "imageOCR/IMG_1824.JPG"
 
-# load the input image
-image = cv2.imread(args["image"])
+if  args["image"] is not None:
+    # load the input image
+    image = cv2.imread(args["image"])
+    print("find:", decodeBarcode(image))
+else:
+    #files = glob.glob('imageOCR/IMG_*.JPG')
+    files = [y for x in os.walk('/home/qa/Desktop/16412') for y in glob(os.path.join(x[0], '*.jpg'))]
+    files.sort()
+    '''
+    files=["/home/qa/Desktop/0721/94932_A1/2.jpg",
+"/home/qa/Desktop/0721/63519_A1/2.jpg",
+"/home/qa/Desktop/0721/73117_A1/2.jpg",
+"/home/qa/Desktop/0721/77222_A1/2.jpg",
+"/home/qa/Desktop/0721/81187_A1/2.jpg",
+"/home/qa/Desktop/0721/58180_A1/2.jpg",
+"/home/qa/Desktop/0721/51312_A1/2.jpg",
+"/home/qa/Desktop/0721/53060_A1/2.jpg",
+"/home/qa/Desktop/0721/40395_A1/2.jpg",
+"/home/qa/Desktop/0721/16412_A1/2.jpg"]
+    '''
+    ratios=[0.5, 0.25, 0.75, 1.0]
+    print("count=", len(files))
+    print("now =", datetime.now().time()) 
+    for fn in files:
+        print(fn)
+        image = cv2.imread(fn)
+        #print("find:", decodeBarcode(image))
+        bFind = False
+        sImei = DecodeRotateBar(image)
+        if sImei is not None and len(sImei)>0:
+            print(fn, "=", sImei)
+            bFind = True
+        # for ratio in ratios :
+        #     sImei = decodeBarcode(image, ratio)
+        #     if sImei is None or len(sImei) == 0:
+        #         # sImei = decodeBarcode(image, 0.25)
+        #         # if sImei is None or len(sImei) == 0:        
+        #         #     print("Decode Fail:", fn)
+        #         # else:
+        #         #     print(fn, "=", sImei)
+        #         pass
+        #     else:
+        #         print(fn, "=", sImei)
+        #         bFind = True
+        #         break
 
-print("find:", decodeBarcode(image))
+        if not bFind :
+            print("Decode Fail:", fn)
+
+    print("end =", datetime.now().time()) 
 
 # # find the barcodes in the image and decode each of the barcodes
 # barcodes = pyzbar.decode(image)

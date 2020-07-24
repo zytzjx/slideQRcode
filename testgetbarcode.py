@@ -109,29 +109,35 @@ def detect_bar(gray):
 
 def featuredetect(img):
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    gray = cv2.bilateralFilter(gray, 15, 5, 5)
     gray = np.float32(gray)
-    dst = cv2.cornerHarris(gray,2,3,0.4)
+    # dst = cv2.cornerHarris(gray,2,3,0.4)
 
-    #result is dilated for marking the corners, not important
-    dst = cv2.dilate(dst,None)
+    # #result is dilated for marking the corners, not important
+    # dst = cv2.dilate(dst,None)
 
-    # Threshold for an optimal value, it may vary depending on the image.
-    img[dst>0.1*dst.max()]=[0,0,255]
+    # # Threshold for an optimal value, it may vary depending on the image.
+    # img[dst>0.1*dst.max()]=[0,0,255]
 
 
     # height, width = gray.shape
     # dst = np.zeros((height,width,1),np.uint8)
-    # for i in range(0,height):
-    #     for j in range(0,width):
-    #         dst[i,j] = 255-gray[i,j]
-    cv2.imwrite("bar_image.jpg",img)
+    # for i in range(height):
+    #     for j in range(width):
+            # dst[i,j] = 255-gray[i,j]
+    # cv2.imwrite("bar_image.jpg",img)
     cv2.imshow('featuredetect',image_resize(img, ratio=0.125))
+
+    ret, img_binary = cv2.threshold(cv2.cvtColor(img,cv2.COLOR_BGR2GRAY),0,255,cv2.THRESH_OTSU)
+    cv2.imwrite("bar_image.jpg",img_binary)
+    cv2.imshow('img_binary',image_resize(img_binary, ratio=0.125))
+
     cv2.waitKey(0)
 
 
 cong = r'--oem 3 --psm 6 outputbase digits'
 if __name__ == '__main__':
-    image = cv2.imread('imageOCR/IMG_1740.JPG')#("imageOCR/WechatIMG980.jpeg")
+    image = cv2.imread("imageOCR/WechatIMG980.jpeg")
     featuredetect(image)
 
     image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
